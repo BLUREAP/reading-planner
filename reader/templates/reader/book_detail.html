@@ -9,7 +9,7 @@
         <a href="{% url 'book_list' %}" class="btn btn-sm btn-outline-secondary">← Назад</a>
     </div>
     <div class="card-body">
-        <p class="text-muted mb-2">✍️ {{ book.author }} | 📄 {{ book.total_pages }} стр. | 📅 Дедлайн: {{ book.deadline }}</p>
+        <p class="small text-muted">Прочитано: <strong>{{ total_read }}</strong> из {{ book.total_pages }} страниц</p>
         
         <!-- Прогресс-бар -->
         <div class="progress mb-3" style="height: 25px;">

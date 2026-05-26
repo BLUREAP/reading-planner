@@ -12,20 +12,32 @@ def fetch_book_data(title: str) -> dict | None:
     params = {"title": title, "limit": 1}
     
     try:
-        response = requests.get(url, params=params, timeout=5)
+        response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
         
-        if data.get("docs"):
+        # Проверяем, нашлась ли хотя бы одна книга
+        if data.get("numFound", 0) > 0:
             doc = data["docs"][0]
+            
+            # Автор: OpenLibrary возвращает список
+            authors = doc.get("author_name", [])
+            author = authors[0] if authors else "Неизвестный автор"
+            
+            # Страницы: берём медиану, если нет – первую запись, иначе 300
+            pages_raw = doc.get("number_of_pages_median") or doc.get("number_of_pages", [300])
+            pages = int(pages_raw[0]) if isinstance(pages_raw, list) else int(pages_raw)
+            
             return {
                 "title": doc.get("title"),
-                "author": doc.get("author_name", ["Неизвестный автор"])[0],
-                "pages": doc.get("number_of_pages_median") or 300,
+                "author": author,
+                "pages": pages,
                 "external_id": doc.get("key", "").replace("/works/", "")
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # Ошибка попадёт в лог PythonAnywhere для отладки
+        print(f"❌ OpenLibrary API Error: {e}")
+        
     return None
 
 
@@ -56,13 +68,12 @@ def calculate_progress_chart(book_id, user_id):
                   title=f'Прогресс чтения: {book.title}',
                   labels={'date': 'Дата', 'cumulative_pages': 'Прочитано страниц'})
     
-    # Линия цели
     fig.add_hline(y=book.total_pages, line_dash="dash", line_color="red", 
                   annotation_text="Цель (всего страниц)", annotation_position="bottom right")
     
     fig.update_layout(template="plotly_white", height=400)
 
-    # 4. Конвертация в HTML для вставки в Django-шаблон
+    # 4. Конвертация в HTML
     chart_html = pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
     
     return progress_percent, chart_html, "success"
