@@ -24,6 +24,11 @@
                     <p class="card-text text-muted">{{ book.author|default:"Не указан" }}</p>
                     <p class="mb-1">📄 {{ book.total_pages|default:"?" }} стр. | 📅 Дедлайн: {{ book.deadline }}</p>
                     <small class="text-muted">ID: {{ book.external_id|default:"Локальная" }}</small>
+                    <hr class="my-2">
+                    <form method="post" action="{% url 'book_delete' book.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить книгу?')">🗑️ Удалить</button>
+                    </form>
                 </div>
             </div>
         </div>

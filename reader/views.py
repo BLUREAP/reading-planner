@@ -10,64 +10,76 @@ from .models import Book, ReadingSession
 
 @login_required
 def book_list(request):
-    """Список книг пользователя"""
     books = request.user.book_set.all()
     return render(request, 'reader/book_list.html', {'books': books})
 
 
 @login_required
 def add_book(request):
-    """Добавление книги с интеграцией API"""
     if request.method == 'POST':
         form = BookForm(request.POST)
         if form.is_valid():
             book = form.save(commit=False)
-            
-            # 🔹 Интеграция с OpenLibrary API
             if not book.external_id:
                 api_data = fetch_book_data(book.title)
                 if api_data:
                     book.author = api_data['author']
                     book.total_pages = api_data['pages']
                     book.external_id = api_data['external_id']
-                    messages.success(request, '✅ Данные обновлены из OpenLibrary!')
+                    messages.success(request, '✅ Данные подтянуты из OpenLibrary!')
                 else:
-                    messages.warning(request, '⚠️ Книга не найдена в API. Сохранено как есть.')
-            
+                    messages.warning(request, '⚠️ API не ответил. Сохранено вручную.')
             book.user = request.user
             book.save()
             return redirect('book_list')
     else:
         form = BookForm()
-        
     return render(request, 'reader/add_book.html', {'form': form})
 
 
 @login_required
 def book_detail(request, book_id):
-    """Детальная страница книги с аналитикой"""
     book = get_object_or_404(Book, id=book_id, user=request.user)
     progress, chart_html, status = calculate_progress_chart(book_id, request.user.id)
+    
+    # 🔍 Отладка: проверяем, сколько сессий в БД
+    session_count = ReadingSession.objects.filter(book=book).count()
+    print(f"📊 DEBUG View: Книга '{book.title}' имеет {session_count} сессий в БД.")
+    
+    # Явный расчёт прочитанного
+    agg = ReadingSession.objects.filter(book=book).aggregate(total=Sum('pages_read'))
+    total_read = agg['total'] or 0
     
     return render(request, 'reader/book_detail.html', {
         'book': book,
         'progress': progress,
         'chart_html': chart_html,
         'status': status,
-        'today': date.today().isoformat()  # Для поля даты в форме
+        'today': date.today().isoformat(),
+        'total_read': total_read
     })
 
 
 @login_required
 def add_session(request, book_id):
-    """Запись прочитанных страниц"""
     if request.method == 'POST':
         date_val = request.POST.get('date')
         pages = request.POST.get('pages_read')
-        ReadingSession.objects.create(
-            book_id=book_id,
-            date=date_val,
-            pages_read=int(pages)
-        )
-        messages.success(request, '📈 Сессия записана!')
+        if date_val and pages:
+            ReadingSession.objects.create(book_id=book_id, date=date_val, pages_read=int(pages))
+            print(f"✅ DEBUG Session: Добавлено {pages} стр. для книги {book_id}")
+            messages.success(request, '📈 Сессия записана!')
+        else:
+            messages.error(request, '⚠️ Заполните все поля.')
     return redirect('book_detail', book_id=book_id)
+
+
+@login_required
+def book_delete(request, book_id):
+    book = get_object_or_404(Book, id=book_id, user=request.user)
+    if request.method == 'POST':
+        book_title = book.title
+        book.delete()
+        messages.success(request, f'🗑️ Книга "{book_title}" удалена.')
+        return redirect('book_list')
+    return render(request, 'reader/book_confirm_delete.html', {'book': book})
