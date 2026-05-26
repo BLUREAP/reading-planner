@@ -27,5 +27,16 @@
 
 ### 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/ваш-username/reading_planner.git
+git clone https://github.com/BLUREAP/reading_planner.git
 cd reading_planner
+
+### 2. Ссылка на сайт:
+https://BUREAP.pythonanywhere.com/
+
+## Скриншоты
+
+### Главная страница
+![Главная](Снимки экрана/main.png)
+
+### Страница книги с графиком
+![График](Снимки экрана/chart.png)
