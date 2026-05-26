@@ -7,38 +7,42 @@ from django.db.models import Sum
 
 
 def fetch_book_data(title: str) -> dict | None:
-    """Получает метаданные книги через Google Books API (надежнее для страниц)"""
+    """Получает данные через Google Books API"""
     url = "https://www.googleapis.com/books/v1/volumes"
-    params = {"q": f"intitle:{title}", "maxResults": 1}
+    # Убрали intitle: для более широкого поиска
+    params = {"q": title, "maxResults": 1}
+    
+    print(f"🚀 DEBUG API: Запрос к Google Books: {title}")
     
     try:
         response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
         
-        if data.get("totalItems", 0) > 0:
-            vol = data["items"][0]["volumeInfo"]
+        print(f"📡 DEBUG API: Статус ответа: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
             
-            # Автор
-            authors = vol.get("authors", [])
-            author = ", ".join(authors) if authors else "Неизвестный автор"
-            
-            # Страницы (Google Books почти всегда отдаёт точное число)
-            pages = vol.get("pageCount")
-            if pages is None:
-                pages = 300
-                print(f"ℹ️ DEBUG: Google Books не вернул pageCount для '{title}'. Установлено 300.")
-            else:
-                print(f"✅ DEBUG: '{title}' -> {pages} стр. (Google Books)")
+            if data.get("totalItems", 0) > 0:
+                vol = data["items"][0]["volumeInfo"]
                 
-            return {
-                "title": vol.get("title"),
-                "author": author,
-                "pages": int(pages),
-                "external_id": vol.get("id", "")
-            }
+                author = ", ".join(vol.get("authors", ["Неизвестный"]))
+                pages = vol.get("pageCount") or 300
+                
+                print(f"✅ DEBUG API: Успех! '{vol.get('title')}' -> {pages} стр.")
+                
+                return {
+                    "title": vol.get("title"),
+                    "author": author,
+                    "pages": int(pages),
+                    "external_id": vol.get("id", "")
+                }
+            else:
+                print(f"️ DEBUG API: Книга не найдена (0 items).")
+        else:
+            print(f"❌ DEBUG API: Ошибка сервера Google. Текст: {response.text[:100]}")
+            
     except Exception as e:
-        print(f"❌ API Error: {e}")
+        print(f"❌ DEBUG API Exception: {e}")
         
     return None
 
