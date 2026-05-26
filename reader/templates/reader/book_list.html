@@ -1,0 +1,35 @@
+{% extends "reader/base.html" %}
+
+{% block title %}Мои книги{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📚 Мои книги</h2>
+    <a href="{% url 'add_book' %}" class="btn btn-success">+ Добавить книгу</a>
+</div>
+
+{% if books %}
+    <div class="row">
+        {% for book in books %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <!-- 🔹 СДЕЛАЙ НАЗВАНИЕ КЛИКАБЕЛЬНЫМ -->
+                    <h5 class="card-title">
+                        <a href="{% url 'book_detail' book.id %}" class="text-decoration-none text-dark">
+                            {{ book.title }}
+                        </a>
+                    </h5>
+                    
+                    <p class="card-text text-muted">{{ book.author|default:"Не указан" }}</p>
+                    <p class="mb-1">📄 {{ book.total_pages|default:"?" }} стр. | 📅 Дедлайн: {{ book.deadline }}</p>
+                    <small class="text-muted">ID: {{ book.external_id|default:"Локальная" }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">📚 Пока нет добавленных книг. Начните с кнопки выше!</div>
+{% endif %}
+{% endblock %}

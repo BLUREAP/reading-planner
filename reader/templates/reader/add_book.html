@@ -1,0 +1,36 @@
+{% extends "reader/base.html" %}
+
+{% block title %}Добавить книгу{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">📖 Добавить новую книгу</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">{{ form.title.label }}</label>
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">{{ form.author.label }}</label>
+                {{ form.author }}
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.total_pages.label }}</label>
+                    {{ form.total_pages }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.deadline.label }}</label>
+                    {{ form.deadline }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">💾 Сохранить и подтянуть данные из API</button>
+        </form>
+    </div>
+</div>
+<a href="{% url 'book_list' %}" class="btn btn-outline-secondary mt-3">← Назад к списку</a>
+{% endblock %}
