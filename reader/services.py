@@ -9,7 +9,6 @@ from django.db.models import Sum
 def fetch_book_data(title: str) -> dict | None:
     """Получает данные через Google Books API"""
     url = "https://www.googleapis.com/books/v1/volumes"
-    # Убрали intitle: для более широкого поиска
     params = {"q": title, "maxResults": 1}
     
     print(f"🚀 DEBUG API: Запрос к Google Books: {title}")
